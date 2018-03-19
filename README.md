@@ -1,11 +1,13 @@
 # DMonPacing
 
 > An advanced data mining experiment project based on real human pacing dataset.
-Provided by [Yimian](https://www.yimian.com.cn/) Corporation.
-Special thanks to Jinjie Zhang, CTO of Yimian Corporation, who helped us to write the following design sheet and provide the target dataset for us.
 
----
+> This project is provided by [Yimian](https://www.yimian.com.cn/) Corporation.
 
+> Special thanks to Jinjie Zhang, CTO of Yimian Corporation, who helped us to write the following design sheet and provide the target dataset for us.
+
+## Design sheet
+###
 
 ### Introduction
 数据挖掘是20世纪90年代中期兴起的一项新技术，它是知识发现过程中的关键步骤，在人体行走过程中，不同的行走步态对应不同的足底压力变化情况，为了获得人体不同行走模式与足底压力的对应变化情况，需要对足底压力数据进行特征挖掘，以获得良好的行走模式分类。
@@ -36,7 +38,6 @@ Special thanks to Jinjie Zhang, CTO of Yimian Corporation, who helped us to writ
 
 ## Appendix
 
----
 ### Format of data
  
  | 采集时间（s）| 节点号 | 足尖压力| 第一趾指压力 | 第四趾指压力 | 足跟压力 | IMU x轴数据 | IMU y轴数据 | IMU z轴数据 |
@@ -51,4 +52,4 @@ Special thanks to Jinjie Zhang, CTO of Yimian Corporation, who helped us to writ
 
 ### Pressure position
 
-![pp](https://github.com/lifesaver0129/DMonPacing/blob/master/location_drawing.jpg)
+<img width="400" src = "https://github.com/lifesaver0129/DMonPacing/blob/master/location_drawing.jpg" >
