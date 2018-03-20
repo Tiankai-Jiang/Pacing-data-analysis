@@ -2,9 +2,9 @@
 
 > An advanced data mining experiment project based on real human pacing dataset.
 
-> This project is provided by [Yimian](https://www.yimian.com.cn/) Corporation.
+> This project is provided by [Xeno Dynamics](www.xeno.com/) Corporation.
 
-> Special thanks to Jinjie Zhang, CTO of Yimian Corporation, who helped us to write the following design sheet and provide the target dataset for us.
+> Special thanks to Shilei Li, senior software engineer at Xeno Dynamics, who helped us to write the following design sheet and provide the target dataset for us.
 
 ## Design sheet
 ###
