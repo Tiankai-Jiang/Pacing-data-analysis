@@ -14,10 +14,13 @@ plot_L <- ggplot(data = data_L_trans) +
   geom_line(mapping = aes(x = T, y = value, color = variable), lwd = 0.7) + 
   scale_color_manual(values= c("#d11141", "#00b159", "#00aedb", "#f37735", "#000000")) +
   ggtitle("Left") + xlab("Time(ms)") + ylab("Pressure")
-ggsave("plot_L.png", width = 25, height = 10, units = "cm", dpi = 1000, path = "../")
+#ggsave("plot_L.png", width = 25, height = 10, units = "cm", dpi = 1000, path = "../")
 
 plot_R <- ggplot(data = data_R_trans) + 
   geom_line(mapping = aes(x = T, y = value, color = variable), lwd = 0.7) + 
   scale_color_manual(values= c("#d11141", "#00b159", "#00aedb", "#f37735", "#000000")) +
   ggtitle("Right") + xlab("Time(ms)") + ylab("Pressure")
-ggsave("plot_R.png", width = 25, height = 10, units = "cm", dpi = 1000, path = "../")
+#ggsave("plot_R.png", width = 25, height = 10, units = "cm", dpi = 1000, path = "../")
+
+multiplot(plot_L, plot_R, rows=2)
+#ggsave("plot.png", width = 25, height =20, units = "cm", dpi = 1000, path = "../")
