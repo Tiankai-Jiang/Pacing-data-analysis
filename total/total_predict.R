@@ -1,19 +1,17 @@
 #Def function colVars
 colVars <- function(x, na.rm=FALSE, dims=1, unbiased=TRUE, SumSquares=FALSE,
-                    twopass=FALSE) {
-  if (SumSquares) return(colSums(x^2, na.rm, dims))
-  N <- colSums(!is.na(x), FALSE, dims)
-  Nm1 <- if (unbiased) N-1 else N
-  if (twopass) {x <- if (dims==length(dim(x))) x - mean(x, na.rm=na.rm) else
-    sweep(x, (dims+1):length(dim(x)), colMeans(x,na.rm,dims))}
-  (colSums(x^2, na.rm, dims) - colSums(x, na.rm, dims)^2/N) / Nm1
-}
+	twopass=FALSE) {
+	if (SumSquares) return(colSums(x^2, na.rm, dims))
+	N <- colSums(!is.na(x), FALSE, dims)
+	Nm1 <- if (unbiased) N-1 else N
+	if (twopass) {x <- if (dims==length(dim(x))) x - mean(x, na.rm=na.rm) else
+		sweep(x, (dims+1):length(dim(x)), colMeans(x,na.rm,dims))}
+		(colSums(x^2, na.rm, dims) - colSums(x, na.rm, dims)^2/N) / Nm1
+	}
 
-tbl = list.files(pattern="*.csv")
-for(file in tbl){
-  
+#func_predict <- function()
   #Read data
-  dat <- read.csv(file)
+  dat <- read.csv("to_be_predicted.csv")
   
   #Find threshold, use both left or right is OK
   dat["Sum_L"] <- NA
@@ -22,28 +20,36 @@ for(file in tbl){
   
   ###################################################################if static
   if(total_variance<3000){
-    loop <- as.integer(nrow(dat)/300)
-    
+  	loop <- as.integer(nrow(dat)/300)
+
     #total_pressure
     total_pressure <- mean(rowSums(dat[,c(2:9)]))
     
     for(b in 2:(loop-1)){
-      contact <- 300*b
-      off<- contact+100
-      a <- total_pressure
-      s = 0
-      for(i in 2:9){
-        s = s + var(dat[contact:off,i])
-      }
-      a <- c(a, s)
-      a <- c(a, substr(file, 1, nchar(file)-5))
-      res <- paste(a,collapse=",")
-      write.table(res, file="../static_parameter.csv", append = TRUE,eol ="\n", row.names=FALSE, col.names = FALSE, quote=FALSE)
+    	contact <- 300*b
+    	off<- contact+100
+    	a <- total_pressure
+    	s = 0
+    	for(i in 2:9){
+    		s = s + var(dat[contact:off,i])
+    	}
+    	a <- c(a, s)
+    	a <- c(a, "sitting")
+    	res <- paste(a,collapse=",")
+    	write.table(res, file="../tmp.csv", append = TRUE,eol ="\n", row.names=FALSE, col.names = FALSE, quote=FALSE)
     }
-    rm(list=setdiff(ls(), "colVars"))
-    next
+
+    dat_static <- read.csv("../tmp.csv", header = FALSE)
+    mean <- mean(dat_static[,1])
+    if(mean > static_separator ){
+    	print("Standing")
+    }else{
+    	print("Sitting")
+    }
+    unlink("../tmp.csv")
+    quit(save = "no")
   }
-  
+
   ###################################################################else, it is dynamic
   
   threshold_L <- mean(dat$Sum_L)/3
@@ -60,18 +66,18 @@ for(file in tbl){
   cut <- subset(dat2, Sum_L > (threshold_L-10) & Sum_L < (threshold_L+10))
   
   for(i in 1:(nrow(cut)-1)){
-    st <- as.integer(cut[i, "Ind"])
-    ed <- as.integer(cut[i+1, "Ind"])
-    if(var(dat[st:ed,]$Sum_L) > ths){
-      pair_points[[l]] <- list(st, ed)
-      l = l+1
-    }
+  	st <- as.integer(cut[i, "Ind"])
+  	ed <- as.integer(cut[i+1, "Ind"])
+  	if(var(dat[st:ed,]$Sum_L) > ths){
+  		pair_points[[l]] <- list(st, ed)
+  		l = l+1
+  	}
   }
   
   for(b in 2:(length(pair_points)-1)){
-    contact <- pair_points[[b]][[1]]
-    off<- pair_points[[b]][[2]]
-    
+  	contact <- pair_points[[b]][[1]]
+  	off<- pair_points[[b]][[2]]
+
     #Order: preFC, postFC, preFO, postFO
     AnalysisWindow <- list()
     AnalysisWindow[[1]] <- dat[c((contact-19):contact),]
@@ -81,65 +87,65 @@ for(file in tbl){
     
     #Modify the zero-variance columns
     for(j in 1:4){
-      tmp <- colVars(AnalysisWindow[[j]])
-      for(i in 2:9){
-        if(tmp[i] == 0){
-          AnalysisWindow[[j]][,i][20] = AnalysisWindow[[j]][,i][19] + 1
-        }
-      }
+    	tmp <- colVars(AnalysisWindow[[j]])
+    	for(i in 2:9){
+    		if(tmp[i] == 0){
+    			AnalysisWindow[[j]][,i][20] = AnalysisWindow[[j]][,i][19] + 1
+    		}
+    	}
     }
     
     #Change to time series
     Inter <- list()
     for(j in 1:4){
-      x <- list()
+    	x <- list()
       # Order: L toe, inner, outer, heel R
       for(i in 1:8){
-        x[[i]] <- as.ts(AnalysisWindow[[j]][,i+1], start=min(AnalysisWindow[[j]]$T), end=max(AnalysisWindow[[j]]$T))
+      	x[[i]] <- as.ts(AnalysisWindow[[j]][,i+1], start=min(AnalysisWindow[[j]]$T), end=max(AnalysisWindow[[j]]$T))
       }
       Inter[[j]] <-x
-    }
-    
+  }
+
     #Calculate F1 for each analysis window
     F1 <-list()
     for(j in 1:4){
-      y <- matrix(0, ncol = 3, nrow = 8)
-      for(i in 1:8){
-        y[i,] <- ar(Inter[[j]][[i]], aic = FALSE, 3)$ar
-      }
-      F1[[j]] <- y
+    	y <- matrix(0, ncol = 3, nrow = 8)
+    	for(i in 1:8){
+    		y[i,] <- ar(Inter[[j]][[i]], aic = FALSE, 3)$ar
+    	}
+    	F1[[j]] <- y
     }
     
     #Calculate F2 for each analysis window
     F2 <- list()
     for(k in 1:4){
-      z <- NULL
-      for(i in 1:4){
-        for(j in 2:4){
-          if(j > i){
-            z <- c(z, cor(AnalysisWindow[[k]][,i+1], AnalysisWindow[[k]][,j+1], method = "pearson"))
-          }
-        }
-      }
-      
-      for(i in 1:4){
-        for(j in 2:4){
-          if(j > i){
-            z <- c(z, cor(AnalysisWindow[[k]][,i+5], AnalysisWindow[[k]][,j+5], method = "pearson"))
-          }
-        }
-      }
-      F2[[k]] <- z
+    	z <- NULL
+    	for(i in 1:4){
+    		for(j in 2:4){
+    			if(j > i){
+    				z <- c(z, cor(AnalysisWindow[[k]][,i+1], AnalysisWindow[[k]][,j+1], method = "pearson"))
+    			}
+    		}
+    	}
+
+    	for(i in 1:4){
+    		for(j in 2:4){
+    			if(j > i){
+    				z <- c(z, cor(AnalysisWindow[[k]][,i+5], AnalysisWindow[[k]][,j+5], method = "pearson"))
+    			}
+    		}
+    	}
+    	F2[[k]] <- z
     }
     
     #Calculate F3 for each analysis window
     F3 <- list()
     for(k in 1:4){
-      s = 0
-      for(i in 2:9){
-        s = s + var(AnalysisWindow[[k]][,i])
-      }
-      F3[[k]] <- s
+    	s = 0
+    	for(i in 2:9){
+    		s = s + var(AnalysisWindow[[k]][,i])
+    	}
+    	F3[[k]] <- s
     }
     
     #Write to file
@@ -147,22 +153,22 @@ for(file in tbl){
     a <- c(a, as.vector(t(F2[[1]])))
     a <- c(a, F3[[1]])
     a <- c(a, total_pressure)
-    a <- c(a, substr(file, 1, nchar(file)-5))
+    a <- c(a, "downstairs")
     res <- paste(a,collapse=",")
-    write.table(res, file="../dynamic_parameter.csv", append = TRUE,eol ="\n", row.names=FALSE, col.names = FALSE, quote=FALSE)
-  }
-  
-  #Clean up a bit
-  rm(list=setdiff(ls(), "colVars"))
+    write.table(res, file="../tmp.csv", append = TRUE,eol ="\n", row.names=FALSE, col.names = FALSE, quote=FALSE)
 }
 
-dat_static <- read.csv("../static_parameter.csv", header = FALSE)
-static_separator <- mean(dat_static[,1])
-
-
-dat_dynamic <- read.csv("../dynamic_parameter.csv", header = FALSE)
-data <- dat_dynamic[, 1:36]
-label <- dat_dynamic[,39]
-(lda.sol = lda(data, label))
-
-rm(dat_static, dat_dynamic, colVars, data, label)
+  dat_dynamic <- read.csv("../tmp.csv", header = FALSE)
+  p_data <- dat_dynamic[, 1:36]
+  p_label <- dat_dynamic[,39]
+  p <- predict(lda.sol, p_data)
+  fnl <- which.max(as.vector(table(p$class)))
+  if(fnl == 1){
+    print("downstairs")
+  }else if(fnl == 2){
+    print("upstairs")
+  }else{
+    print("walking")
+  }
+  #print(p$class)
+  unlink("../tmp.csv")

@@ -159,7 +159,7 @@ for(file in tbl){
 dat_static <- read.csv("../static_parameter.csv", header = FALSE)
 static_separator <- mean(dat_static[,1])
 
-
+require(MASS)
 dat_dynamic <- read.csv("../dynamic_parameter.csv", header = FALSE)
 data <- dat_dynamic[, 1:36]
 label <- dat_dynamic[,39]
