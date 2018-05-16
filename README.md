@@ -1,4 +1,4 @@
-# DMonPacing
+# Pacing-data-analysis
 
 > An advanced data mining experiment project based on real human pacing dataset.
 
