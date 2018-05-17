@@ -1,6 +1,7 @@
+setwd("~/Documents/Repertory/Advanced CS Experiment/DMonPacing/total")
 require(caret)
 require(MASS)
-dat <- read.csv("../dynamic_parameter.csv", header = FALSE)
+dat <- read.csv("dynamic_parameter.csv", header = FALSE)
 
 folds<-createFolds(dat$V1,k=5)
 

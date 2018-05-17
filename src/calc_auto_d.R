@@ -24,7 +24,7 @@ for(file in tbl){
   total_pressure <- mean(rowSums(dat[,c(2:9)]))
   
   pair_points <- list()
-  ths = 1000
+  ths = 2000
   l = 1
   dat2 <- dat
   dat2["Ind"] <- NA
@@ -43,10 +43,6 @@ for(file in tbl){
   for(b in 2:(length(pair_points)-1)){
     contact <- pair_points[[b]][[1]]
     off<- pair_points[[b]][[2]]
-    
-    #if(length(pair_points))
-    #contact <- 588
-    #off <- 683
     
     #Order: preFC, postFC, preFO, postFO
     AnalysisWindow <- list()

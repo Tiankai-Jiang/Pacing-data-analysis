@@ -1,3 +1,5 @@
+setwd("~/Documents/Repertory/Advanced CS Experiment/DMonPacing/total/gaits")
+
 #Def function colVars
 colVars <- function(x, na.rm=FALSE, dims=1, unbiased=TRUE, SumSquares=FALSE,
                     twopass=FALSE) {
