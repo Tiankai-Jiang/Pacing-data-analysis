@@ -1,3 +1,5 @@
+setwd("~/Documents/Repertory/Advanced CS Experiment/DMonPacing/total/predict")
+
 #Def function colVars
 colVars <- function(x, na.rm=FALSE, dims=1, unbiased=TRUE, SumSquares=FALSE,
 	twopass=FALSE) {
@@ -9,9 +11,8 @@ colVars <- function(x, na.rm=FALSE, dims=1, unbiased=TRUE, SumSquares=FALSE,
 		(colSums(x^2, na.rm, dims) - colSums(x, na.rm, dims)^2/N) / Nm1
 	}
 
-#func_predict <- function()
   #Read data
-  dat <- read.csv("to_be_predicted.csv")
+  dat <- read.csv("to_be_predicted_sitting.csv")
   
   #Find threshold, use both left or right is OK
   dat["Sum_L"] <- NA
@@ -34,7 +35,7 @@ colVars <- function(x, na.rm=FALSE, dims=1, unbiased=TRUE, SumSquares=FALSE,
     		s = s + var(dat[contact:off,i])
     	}
     	a <- c(a, s)
-    	a <- c(a, "sitting")
+    	a <- c(a, "predict")
     	res <- paste(a,collapse=",")
     	write.table(res, file="../tmp.csv", append = TRUE,eol ="\n", row.names=FALSE, col.names = FALSE, quote=FALSE)
     }
@@ -42,133 +43,133 @@ colVars <- function(x, na.rm=FALSE, dims=1, unbiased=TRUE, SumSquares=FALSE,
     dat_static <- read.csv("../tmp.csv", header = FALSE)
     mean <- mean(dat_static[,1])
     if(mean > static_separator ){
-    	print("Standing")
+    	cat("Standing\n")
     }else{
-    	print("Sitting")
+    	cat("Sitting\n")
     }
     unlink("../tmp.csv")
-    quit(save = "no")
-  }
-
-  ###################################################################else, it is dynamic
-  
-  threshold_L <- mean(dat$Sum_L)/3
-  
-  #total_pressure
-  total_pressure <- mean(rowSums(dat[,c(2:9)]))
-  
-  pair_points <- list()
-  ths = 2000
-  l = 1
-  dat2 <- dat
-  dat2["Ind"] <- NA
-  dat2[, "Ind"] <- as.numeric(rownames(dat2))
-  cut <- subset(dat2, Sum_L > (threshold_L-10) & Sum_L < (threshold_L+10))
-  
-  for(i in 1:(nrow(cut)-1)){
-  	st <- as.integer(cut[i, "Ind"])
-  	ed <- as.integer(cut[i+1, "Ind"])
-  	if(var(dat[st:ed,]$Sum_L) > ths){
-  		pair_points[[l]] <- list(st, ed)
-  		l = l+1
-  	}
-  }
-  
-  for(b in 2:(length(pair_points)-1)){
-  	contact <- pair_points[[b]][[1]]
-  	off<- pair_points[[b]][[2]]
-
-    #Order: preFC, postFC, preFO, postFO
-    AnalysisWindow <- list()
-    AnalysisWindow[[1]] <- dat[c((contact-19):contact),]
-    AnalysisWindow[[2]] <- dat[c((contact+1):(contact+20)),]
-    AnalysisWindow[[3]] <- dat[c((off-19):off),]
-    AnalysisWindow[[4]] <- dat[c((off+1):(off+20)),]
-    
-    #Modify the zero-variance columns
-    for(j in 1:4){
-    	tmp <- colVars(AnalysisWindow[[j]])
-    	for(i in 2:9){
-    		if(tmp[i] == 0){
-    			AnalysisWindow[[j]][,i][20] = AnalysisWindow[[j]][,i][19] + 1
-    		}
-    	}
-    }
-    
-    #Change to time series
-    Inter <- list()
-    for(j in 1:4){
-    	x <- list()
-      # Order: L toe, inner, outer, heel R
-      for(i in 1:8){
-      	x[[i]] <- as.ts(AnalysisWindow[[j]][,i+1], start=min(AnalysisWindow[[j]]$T), end=max(AnalysisWindow[[j]]$T))
-      }
-      Inter[[j]] <-x
-  }
-
-    #Calculate F1 for each analysis window
-    F1 <-list()
-    for(j in 1:4){
-    	y <- matrix(0, ncol = 3, nrow = 8)
-    	for(i in 1:8){
-    		y[i,] <- ar(Inter[[j]][[i]], aic = FALSE, 3)$ar
-    	}
-    	F1[[j]] <- y
-    }
-    
-    #Calculate F2 for each analysis window
-    F2 <- list()
-    for(k in 1:4){
-    	z <- NULL
-    	for(i in 1:4){
-    		for(j in 2:4){
-    			if(j > i){
-    				z <- c(z, cor(AnalysisWindow[[k]][,i+1], AnalysisWindow[[k]][,j+1], method = "pearson"))
-    			}
-    		}
-    	}
-
-    	for(i in 1:4){
-    		for(j in 2:4){
-    			if(j > i){
-    				z <- c(z, cor(AnalysisWindow[[k]][,i+5], AnalysisWindow[[k]][,j+5], method = "pearson"))
-    			}
-    		}
-    	}
-    	F2[[k]] <- z
-    }
-    
-    #Calculate F3 for each analysis window
-    F3 <- list()
-    for(k in 1:4){
-    	s = 0
-    	for(i in 2:9){
-    		s = s + var(AnalysisWindow[[k]][,i])
-    	}
-    	F3[[k]] <- s
-    }
-    
-    #Write to file
-    a <- as.vector(t(F1[[1]]))
-    a <- c(a, as.vector(t(F2[[1]])))
-    a <- c(a, F3[[1]])
-    a <- c(a, total_pressure)
-    a <- c(a, "downstairs")
-    res <- paste(a,collapse=",")
-    write.table(res, file="../tmp.csv", append = TRUE,eol ="\n", row.names=FALSE, col.names = FALSE, quote=FALSE)
-}
-
-  dat_dynamic <- read.csv("../tmp.csv", header = FALSE)
-  p_data <- dat_dynamic[, 1:36]
-  p_label <- dat_dynamic[,39]
-  p <- predict(lda.sol, p_data)
-  fnl <- which.max(as.vector(table(p$class)))
-  if(fnl == 1){
-    print("downstairs")
-  }else if(fnl == 2){
-    print("upstairs")
   }else{
-    print("walking")
+    
+    ###################################################################else, it is dynamic
+    
+    threshold_L <- mean(dat$Sum_L)/3
+    
+    #total_pressure
+    total_pressure <- mean(rowSums(dat[,c(2:9)]))
+    
+    pair_points <- list()
+    ths = 2000
+    l = 1
+    dat2 <- dat
+    dat2["Ind"] <- NA
+    dat2[, "Ind"] <- as.numeric(rownames(dat2))
+    cut <- subset(dat2, Sum_L > (threshold_L-10) & Sum_L < (threshold_L+10))
+    
+    for(i in 1:(nrow(cut)-1)){
+      st <- as.integer(cut[i, "Ind"])
+      ed <- as.integer(cut[i+1, "Ind"])
+      if(var(dat[st:ed,]$Sum_L) > ths){
+        pair_points[[l]] <- list(st, ed)
+        l = l+1
+      }
+    }
+    
+    for(b in 2:(length(pair_points)-1)){
+      contact <- pair_points[[b]][[1]]
+      off<- pair_points[[b]][[2]]
+      
+      #Order: preFC, postFC, preFO, postFO
+      AnalysisWindow <- list()
+      AnalysisWindow[[1]] <- dat[c((contact-19):contact),]
+      AnalysisWindow[[2]] <- dat[c((contact+1):(contact+20)),]
+      AnalysisWindow[[3]] <- dat[c((off-19):off),]
+      AnalysisWindow[[4]] <- dat[c((off+1):(off+20)),]
+      
+      #Modify the zero-variance columns
+      for(j in 1:4){
+        tmp <- colVars(AnalysisWindow[[j]])
+        for(i in 2:9){
+          if(tmp[i] == 0){
+            AnalysisWindow[[j]][,i][20] = AnalysisWindow[[j]][,i][19] + 1
+          }
+        }
+      }
+      
+      #Change to time series
+      Inter <- list()
+      for(j in 1:4){
+        x <- list()
+        # Order: L toe, inner, outer, heel R
+        for(i in 1:8){
+          x[[i]] <- as.ts(AnalysisWindow[[j]][,i+1], start=min(AnalysisWindow[[j]]$T), end=max(AnalysisWindow[[j]]$T))
+        }
+        Inter[[j]] <-x
+      }
+      
+      #Calculate F1 for each analysis window
+      F1 <-list()
+      for(j in 1:4){
+        y <- matrix(0, ncol = 3, nrow = 8)
+        for(i in 1:8){
+          y[i,] <- ar(Inter[[j]][[i]], aic = FALSE, 3)$ar
+        }
+        F1[[j]] <- y
+      }
+      
+      #Calculate F2 for each analysis window
+      F2 <- list()
+      for(k in 1:4){
+        z <- NULL
+        for(i in 1:4){
+          for(j in 2:4){
+            if(j > i){
+              z <- c(z, cor(AnalysisWindow[[k]][,i+1], AnalysisWindow[[k]][,j+1], method = "pearson"))
+            }
+          }
+        }
+        
+        for(i in 1:4){
+          for(j in 2:4){
+            if(j > i){
+              z <- c(z, cor(AnalysisWindow[[k]][,i+5], AnalysisWindow[[k]][,j+5], method = "pearson"))
+            }
+          }
+        }
+        F2[[k]] <- z
+      }
+      
+      #Calculate F3 for each analysis window
+      F3 <- list()
+      for(k in 1:4){
+        s = 0
+        for(i in 2:9){
+          s = s + var(AnalysisWindow[[k]][,i])
+        }
+        F3[[k]] <- s
+      }
+      
+      #Write to file
+      a <- as.vector(t(F1[[1]]))
+      a <- c(a, as.vector(t(F2[[1]])))
+      a <- c(a, F3[[1]])
+      a <- c(a, total_pressure)
+      a <- c(a, "predict")
+      res <- paste(a,collapse=",")
+      write.table(res, file="../tmp.csv", append = TRUE,eol ="\n", row.names=FALSE, col.names = FALSE, quote=FALSE)
+    }
+    
+    dat_dynamic <- read.csv("../tmp.csv", header = FALSE)
+    p_data <- dat_dynamic[, 1:36]
+    p_label <- dat_dynamic[,39]
+    p <- predict(lda.sol, p_data)
+    fnl <- which.max(as.vector(table(p$class)))
+    if(fnl == 1){
+      cat("Downstairs\n")
+    }else if(fnl == 2){
+      cat("Upstairs\n")
+    }else{
+      cat("Walking\n")
+    }
+    unlink("../tmp.csv")
   }
-  #print(p$class)
-  unlink("../tmp.csv")
+  rm(list = ls()[!ls() %in% c("lda.sol", "static_separator")])
