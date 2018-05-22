@@ -159,7 +159,8 @@ for(file in tbl){
 }
 
 dat_static <- read.csv("../static_parameter.csv", header = FALSE)
-static_separator <- mean(dat_static[,1])
+static_separator <- mean(tapply(dat_static[,1], dat_static[,3], mean))
+#static_separator <- mean(dat_static[,1])
 
 require(MASS)
 dat_dynamic <- read.csv("../dynamic_parameter.csv", header = FALSE)

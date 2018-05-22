@@ -19,4 +19,4 @@ for(i in 1:5){
   p = predict(lda.sol, p_Gait_data)
   print(table(p_Gait_label, p$class))
 }
-qplot(p$x[,"LD1"], p$x[,"LD2"], color = p$class, xlab = "LD1", ylab = "LD2")
+#qplot(p$x[,"LD1"], p$x[,"LD2"], color = p$class, xlab = "LD1", ylab = "LD2")

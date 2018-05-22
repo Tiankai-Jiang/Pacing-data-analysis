@@ -12,7 +12,7 @@ colVars <- function(x, na.rm=FALSE, dims=1, unbiased=TRUE, SumSquares=FALSE,
 	}
 
   #Read data
-  dat <- read.csv("to_be_predicted_sitting.csv")
+  dat <- read.csv("to_be_predicted_walking.csv")
   
   #Find threshold, use both left or right is OK
   dat["Sum_L"] <- NA
